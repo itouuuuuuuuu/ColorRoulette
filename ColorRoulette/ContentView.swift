@@ -38,7 +38,7 @@ struct ContentView: View {
                 .foregroundColor(backgroundColor.opacity(0.1))
                 .overlay {
                     Text(currentIndex >= 0 ? colorTextPairs[currentIndex].1 : "スタート")
-                        .font(.largeTitle)
+                        .font(.system(size: 80))
                         .fontWeight(.bold)
                         .foregroundColor(textColor)
                 }
