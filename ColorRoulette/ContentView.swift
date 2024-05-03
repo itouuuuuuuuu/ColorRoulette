@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  ColorRoulette
-//
-//  Created by Masafumi Ito on 2024/05/04.
-//
-
 import SwiftUI
 import AVFoundation
 
@@ -69,6 +62,7 @@ struct ContentView: View {
             let stopColor = colorTextPairs[currentIndex].2
             if let colorSound = colorSounds[stopColor] {
                 stopSound?.play()
+                // 指定秒後に色の音声を再生
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                     colorSound.play()
                 }
@@ -79,7 +73,10 @@ struct ContentView: View {
     func rotateColors() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             if self.isRotating {
-                let randomIndex = Int.random(in: 0..<self.colorTextPairs.count)
+                var randomIndex: Int
+                repeat {
+                    randomIndex = Int.random(in: 0..<self.colorTextPairs.count)
+                } while randomIndex == self.currentIndex // 現在の色と同じ場合、別のランダムインデックスを選択
                 self.backgroundColor = self.colorTextPairs[randomIndex].0
                 self.textColor = self.backgroundColor
                 self.currentIndex = randomIndex
