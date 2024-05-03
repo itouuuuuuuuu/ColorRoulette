@@ -6,29 +6,45 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct ContentView: View {
-    let colorTextPairs: [(Color, String)] = [
-        (.red, "あか"),
-        (.blue, "あお"),
-        (.green, "みどり"),
-        (.yellow, "きいろ"),
-        (.pink, "ぴんく"),
-        (.purple, "むらさき"),
-        (.brown, "ちゃいろ"),
+    let colorTextPairs: [(Color, String, String)] = [
+        (.red, "あか", "red"),
+        (.blue, "あお", "blue"),
+        (.yellow, "きいろ", "yellow"),
+        (.purple, "むらさき", "purple"),
+        (.green, "みどり", "green"),
     ]
     @State private var backgroundColor: Color = .white
     @State private var textColor: Color = .black
     @State private var isRotating = false
     @State private var currentIndex = -1
-    @State private var isMuted = false
+    
+    var startSound: AVAudioPlayer?
+    var stopSound: AVAudioPlayer?
+    var colorSounds: [String:AVAudioPlayer] = [:]
+    
+    init() {
+        do {
+            startSound = try AVAudioPlayer(data: NSDataAsset(name: "start")!.data)
+            stopSound = try AVAudioPlayer(data: NSDataAsset(name: "stop")!.data)
+            for (_, _, color) in colorTextPairs {
+                if let data = NSDataAsset(name: color)?.data {
+                    colorSounds[color] = try AVAudioPlayer(data: data)
+                }
+            }
+        } catch {
+            print("Error loading sound file")
+        }
+    }
     
     var body: some View {
         ZStack {
             Rectangle()
                 .foregroundColor(backgroundColor.opacity(0.1))
                 .overlay {
-                    Text(currentIndex >= 0 ? colorTextPairs[currentIndex].1 : "タップしてスタート")
+                    Text(currentIndex >= 0 ? colorTextPairs[currentIndex].1 : "スタート")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(textColor)
@@ -36,20 +52,6 @@ struct ContentView: View {
                 .onTapGesture {
                     self.startStopRotation()
                 }
-            
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        self.isMuted.toggle()
-                    }) {
-                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.fill")
-                            .foregroundColor(.black)
-                            .padding()
-                    }
-                }
-                Spacer()
-            }
         }
         .onAppear {
             self.backgroundColor = .white
@@ -61,17 +63,26 @@ struct ContentView: View {
     func startStopRotation() {
         self.isRotating.toggle()
         if isRotating {
+            startSound?.play()
             rotateColors()
+        } else {
+            let stopColor = colorTextPairs[currentIndex].2
+            if let colorSound = colorSounds[stopColor] {
+                stopSound?.play()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    colorSound.play()
+                }
+            }
         }
     }
     
     func rotateColors() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            let randomIndex = Int.random(in: 0..<self.colorTextPairs.count)
-            self.backgroundColor = self.colorTextPairs[randomIndex].0
-            self.textColor = self.backgroundColor
-            self.currentIndex = randomIndex
             if self.isRotating {
+                let randomIndex = Int.random(in: 0..<self.colorTextPairs.count)
+                self.backgroundColor = self.colorTextPairs[randomIndex].0
+                self.textColor = self.backgroundColor
+                self.currentIndex = randomIndex
                 self.rotateColors()
             }
         }
